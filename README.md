@@ -20,6 +20,7 @@ public protocol FeatureAction {
 ```
 사용 전 해당 프로토콜을 생성해주어야 합니다.
 #### Feature
+- 사용하지 않는 Action을 명시적으로 표현해 사용하지 않음을 나타낼 수 있습니다.
 ```swift
 import ComposableArchitecture
 
@@ -88,7 +89,10 @@ struct ___VARIABLE_sceneName___Feature: Reducer {
 private extension ___VARIABLE_sceneName___Feature {
     /// - View Effect
     func handleViewAction(_ action: Action.ViewAction, state: inout State) -> Effect<Action> {
-        return .none
+        switch action {
+        case .onAppear:
+            return .none
+        }
     }
     /// - Inner Effect
     func handleInnerAction(_ action: Action.InnerAction, state: inout State) -> Effect<Action> {

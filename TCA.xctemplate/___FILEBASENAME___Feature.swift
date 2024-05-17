@@ -71,11 +71,10 @@ struct ___VARIABLE_sceneName___Feature: Reducer {
 private extension ___VARIABLE_sceneName___Feature {
     /// - View Effect
     func handleViewAction(_ action: Action.ViewAction, state: inout State) -> Effect<Action> {
-        //         switch action {
-        //         case (_):
-        //             return .none
-        //         }
-        return .none
+        switch action {
+        case .onAppear:
+            return .none
+        }
     }
     /// - Inner Effect
     func handleInnerAction(_ action: Action.InnerAction, state: inout State) -> Effect<Action> {

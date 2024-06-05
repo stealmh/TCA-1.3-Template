@@ -42,8 +42,8 @@ struct ___VARIABLE_sceneName___Feature: Reducer {
         enum ScopeAction: Equatable { case doNothing }
         enum DelegateAction: Equatable { case doNothing }
     }
-    /// - if No Child, Can Used
-    func reduce(into state: inout State, action: Action) -> Effect<Action> {
+    /// - Reduce core
+    private func core(into state: inout State, action: Action) -> Effect<Action> {
         switch action {
             /// - View
         case .view(let viewAction):
@@ -64,25 +64,12 @@ struct ___VARIABLE_sceneName___Feature: Reducer {
     }
     /// - Reducer body
     var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-                /// - View
-            case .view(let viewAction):
-                return handleViewAction(viewAction, state: &state)
-                /// - Inner
-            case .inner(let innerAction):
-                return handleInnerAction(innerAction, state: &state)
-                /// - Async
-            case .async(let asyncAction):
-                return handleAsyncAction(asyncAction, state: &state)
-                /// - Scope
-            case .scope(let scopeAction):
-                return handleScopeAction(scopeAction, state: &state)
-                /// - Delegate
-            case .delegate(let delegateAction):
-                return handleDelegateAction(delegateAction, state: &state)
-            }
-        }
+        Reduce(self.core)
+        // .ifLet(...)
+        // .forEach(...)
+        // ._printChanges()
+        // .onChage(...)
+        // ...etc
     }
 }
 //MARK: - FeatureAction Effect
@@ -153,3 +140,85 @@ struct ___VARIABLE_sceneName___View_Previews: PreviewProvider {
     }
 }
 ```
+#### 활용
+binding과 Present 그리고 Stack에서도 활용 가능합니다.
+
+1. binding
+```swift
+struct State: Equatable {
+    @BindingState var text: String = ""
+}
+```
+다음과 같은 BindingState가 있다고 하겠습니다. ViewAction 열거형을 통해 view에서만 작업하도록 설정합니다.
+```swift
+enum ViewAction: BindableAction, Equatable {
+    case onAppear
+    case binding(BindingAction<State>)
+}
+```
+이후 Reducer body에 view의 Action을 연결시키면 끝입니다.
+```swift
+var body: some ReducerOf<Self> {
+    BindingReducer(action: /Action.view)
+    Reduce(self.core)
+}
+```
+2. Presentation or Stack
+```swift
+struct Destination: Reducer {
+    enum State: Equatable {
+        case popup(PopupFeature.State)
+    }
+    enum Action: Equatable {
+        case popup(PopupFeature.Action)
+    }
+    var body: some ReducerOf<Self> {
+        Scope(state: /State.after7dayPopup, action: /Action.popup) {
+            DStopDoubleButtonPopupFeature()
+        }
+    }
+}
+```
+내부에 위치 할 Destination Reducer를 만드는 것 부터 시작합니다.
+
+```swift
+struct State: Equatable {
+    @PresentationState var destination: Destination.State?
+}
+
+struct Action: FeatureAction, Equatable {
+    case destination(PresentationAction<Destination.Action>)
+}
+
+func handleDestinationAction(
+    _ action: PresentationAction<Destination.Action>,
+    state: inout State
+) -> Effect<Action> {
+    switch action {
+    case .presented(.popup(.delegate(...))):
+        /// do something
+        return .none
+    case .presented, dismiss: return .none
+    }
+}
+```
+```swift
+private func core(into state: inout State, action: Action) -> EffectOf<Self> {
+    switch action {
+        ...
+        /// - Destination
+    case .destination(let destinationAction):
+        return handleDestinationAction(destinationAction, state: &state)
+    }
+}
+```
+Action에서의 destination의 Action과 동일하게 연결시켜주면 끝입니다.
+```diff
+-  .destination(.presented(.popup(...))):
++  .presented(.popup(...))):
+```
+액션을 잘게 쪼갠 결과 컴파일러가 유추하기 쉬워집니다.
+
+
+
+

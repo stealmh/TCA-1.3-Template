@@ -24,8 +24,9 @@ struct ___VARIABLE_sceneName___Feature: Reducer {
         enum ScopeAction: Equatable { case doNothing }
         enum DelegateAction: Equatable { case doNothing }
     }
-    /// - if No Child, Can Used
-    func reduce(into state: inout State, action: Action) -> Effect<Action> {
+    
+    /// - Reducer Core
+    private func core(into state: inout State, action: Action) -> Effect<Action> {
         switch action {
             /// - View
         case .view(let viewAction):
@@ -46,25 +47,7 @@ struct ___VARIABLE_sceneName___Feature: Reducer {
     }
     /// - Reducer body
     var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-                /// - View
-            case .view(let viewAction):
-                return handleViewAction(viewAction, state: &state)
-                /// - Inner
-            case .inner(let innerAction):
-                return handleInnerAction(innerAction, state: &state)
-                /// - Async
-            case .async(let asyncAction):
-                return handleAsyncAction(asyncAction, state: &state)
-                /// - Scope
-            case .scope(let scopeAction):
-                return handleScopeAction(scopeAction, state: &state)
-                /// - Delegate
-            case .delegate(let delegateAction):
-                return handleDelegateAction(delegateAction, state: &state)
-            }
-        }
+        Reduce(self.core)
     }
 }
 //MARK: - FeatureAction Effect
